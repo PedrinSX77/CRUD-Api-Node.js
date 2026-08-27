@@ -78,13 +78,24 @@ app.get("/headers", (req, res) => {
 // Cria um novo produto utilizando os dados recebidos no body da request.
 app.post("/produtos", (req, res) => {
     console.log(req.body);
+    const {nome , preco} = req.body
 
-    produtos.push(req.body);
+    if (!nome || preco === undefined) {
+        return res.status(400).json({ 
+            error: "Bad Request", 
+            message: "Os campos 'nome' e 'preco' são obrigatórios." 
+        });
+    }
 
-    console.log(produtos);
+    const proximoId = produtos.length > 0 ? produtos[produtos.length - 1].id + 1 : 1;
+    const produtoNovo = {
+        id: proximoId,
+        nome: nome,
+        preco: preco
+    }
+    produtos.push(produtoNovo);
 
-    res.status(201);
-    res.json(req.body);
+    return res.status(201).json(produtoNovo);
 });
 
 
@@ -136,9 +147,13 @@ app.delete("/produtos/:id", (req, res) => {
     }
 });
 
+const errorMiddleware = (err, req, res, next) =>{
+    console.log(err.message);
+};
+
+
 
 // SERVER
-
 // Inicia a API na porta configurada.
 app.listen(port, () => {
     console.log(`Rodando API em: http://localhost:${port}`);

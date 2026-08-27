@@ -5,9 +5,18 @@ const port = 3000;
 
 // Middlewares
 app.use(express.json());
-const showMethodAndUrl = (req, res, next) =>{
+const showMethodAndUrl = (req, res, next) => {
     console.log(`O método utilizado é ${req.method}, e a url ${req.url}`)
     next();
+};
+const errorMiddleware = (err, req, res, next) => {
+    if(err.statusCode !== undefined){
+        res.status(err.statusCode)
+        res.json(err.message);
+    } else{
+        res.status(500);
+        res.json(err.message);
+    }
 };
 
 app.use(showMethodAndUrl);
@@ -49,13 +58,14 @@ app.get("/produtos", (req, res) => {
 });
 
 // Retorna um produto específico pelo ID informado na rota.
-app.get("/produtos/:id", (req, res) => {
+app.get("/produtos/:id", (req, res, next) => {
     const id = Number(req.params.id);
     const i = produtos.findIndex(p => p.id === id);
 
     if (i === -1) {
-        res.status(404);
-        res.send("Erro: Produto não encontrado, id inválido");
+        const erro = new Error("Produto não encontrado");
+        erro.statusCode = 404;
+        return next(erro);
     } else {
         res.status(200);
         res.json(produtos[i]);
@@ -76,15 +86,14 @@ app.get("/headers", (req, res) => {
 // ROTAS POST
 
 // Cria um novo produto utilizando os dados recebidos no body da request.
-app.post("/produtos", (req, res) => {
+app.post("/produtos", (req, res, next) => {
     console.log(req.body);
-    const {nome , preco} = req.body
+    const { nome, preco } = req.body
 
     if (!nome || preco === undefined) {
-        return res.status(400).json({ 
-            error: "Bad Request", 
-            message: "Os campos 'nome' e 'preco' são obrigatórios." 
-        });
+        const erro = new Error("Os campos 'nome' e 'preco' são obrigatórios.")
+        erro.statusCode = 400;
+        return next(erro);
     }
 
     const proximoId = produtos.length > 0 ? produtos[produtos.length - 1].id + 1 : 1;
@@ -104,13 +113,14 @@ app.post("/produtos", (req, res) => {
 // Atualiza parcialmente um produto identificado pelo ID da rota.
 // Os campos enviados no body sobrescrevem os campos correspondentes
 // do produto existente.
-app.patch("/produtos/:id", (req, res) => {
+app.patch("/produtos/:id", (req, res, next) => {
     const id = Number(req.params.id);
     const i = produtos.findIndex(p => p.id === id);
 
     if (i === -1) {
-        res.status(404);
-        res.send("Erro: Produto não encontrado, id inválido");
+        const erro = new Error("Erro: Produto não encontrado, id inválido")
+        erro.statusCode = 404;
+        return next(erro);
     } else {
         const alteracao = req.body;
 
@@ -130,13 +140,14 @@ app.patch("/produtos/:id", (req, res) => {
 // ROTAS DELETE
 
 // Remove um produto específico pelo ID informado na rota.
-app.delete("/produtos/:id", (req, res) => {
+app.delete("/produtos/:id", (req, res, next) => {
     const id = Number(req.params.id);
     const i = produtos.findIndex(p => p.id === id);
 
     if (i === -1) {
-        res.status(404);
-        res.send("Erro: Produto não encontrado, id inválido");
+        const erro = new Error("Erro: Produto não encontrado, id inválido")
+        erro.statusCode = 404;
+        return next(erro);
     } else {
         const produtoDeleted = produtos[i];
 
@@ -147,10 +158,7 @@ app.delete("/produtos/:id", (req, res) => {
     }
 });
 
-const errorMiddleware = (err, req, res, next) =>{
-    console.log(err.message);
-};
-
+app.use(errorMiddleware)
 
 
 // SERVER

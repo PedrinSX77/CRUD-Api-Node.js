@@ -3,7 +3,7 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
-async function buscarProdutoId(id) {
+function buscarProdutoId(id) {
     const promessa = new Promise((resolve, reject) => {
         setTimeout(() => {
             const produto = produtos.find(p => p.id === id);
@@ -73,14 +73,10 @@ app.get("/produtos", (req, res) => {
 });
 
 // Retorna um produto específico pelo ID informado na rota.
-app.get("/produtos/:id", async (req, res, next) => {
+app.get("/produtos/:id", async (req, res) => {
     const id = Number(req.params.id);
-    try {
-        const produto = await buscarProdutoId(id);
-        res.status(200).json(produto);
-    } catch (e) {
-        next(e);
-    }
+    const produto = await buscarProdutoId(id);
+    res.status(200).json(produto);
 });
 
 app.get("/headers", (req, res) => {

@@ -3,4 +3,4 @@ const produtos = [
     { id: 2, nome: "VPS 4GB", preco: 59.90 }
 ];
 
-module.exports = produtos;
+export default produtos;

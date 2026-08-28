@@ -1,9 +1,9 @@
 // API VARIABLES
-require("dotenv").config();
-const express = require("express");
+import "dotenv/config";
+import express from "express";
+import produtosRouter from "./routes/produtos.route.js";
 const app = express();
 const port = process.env.PORT || 3000;
-const produtosRouter = require("./routes/produtos.route")
 
 // Middlewares
 app.use(express.json());
@@ -21,14 +21,11 @@ const errorMiddleware = (err, req, res, next) => {
 };
 
 app.use(showMethodAndUrl);
-
-// ROTAS GET
 app.get("/", (req, res) => {
     res.status(200).send("Aprendendo Node.js com Express");
 });
-
+// Rotas Produtos (GET, POST, PATCH, DELETE)
 app.use("/produtos", produtosRouter);
-
 app.get("/headers", (req, res) => {
     console.log(req.headers);
     const userAgent = req.headers["user-agent"];
@@ -39,9 +36,7 @@ app.get("/headers", (req, res) => {
     }
     res.json(headersReq)
 });
-
-app.use(errorMiddleware)
-
+app.use(errorMiddleware);
 app.listen(port, () => {
     console.log(`Rodando API em: http://localhost:${port}`);
 });

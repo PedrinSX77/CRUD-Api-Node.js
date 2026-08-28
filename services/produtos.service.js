@@ -1,5 +1,7 @@
-const produtos = require("../data/products");
+// Importação da lista de Produtos
+import produtos from "../data/products.js";
 
+// Funções de Processamento
 function listProducts(nome, precoMax) {
     if (nome || precoMax) {
         const produtosProcurados = produtos.filter(p => {
@@ -50,7 +52,7 @@ function createProduct(nome, preco) {
     return produtoNovo;
 }
 
-function deleteProduct(id,) {
+function deleteProduct(id) {
     const i = produtos.findIndex(p => p.id === id);
 
     if (i === -1) {
@@ -87,4 +89,4 @@ function updateProduct(id, novosDados) {
     }
 }
 
-module.exports = { searchProductId, listProducts, createProduct, deleteProduct, updateProduct };
+export { searchProductId, listProducts, createProduct, deleteProduct, updateProduct };

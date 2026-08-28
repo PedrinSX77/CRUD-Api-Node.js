@@ -3,6 +3,23 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
+async function buscarProdutoId(id) {
+    const promessa = new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const produto = produtos.find(p => p.id === id);
+            if (produto === undefined) {
+                const erro = new Error("Produto não encontrado");
+                erro.statusCode = 404;
+                return reject(erro);
+            } else {
+                resolve(produto);
+            }
+        }, 500);
+    })
+
+    return promessa;
+}
+
 // Middlewares
 app.use(express.json());
 const showMethodAndUrl = (req, res, next) => {
@@ -10,12 +27,11 @@ const showMethodAndUrl = (req, res, next) => {
     next();
 };
 const errorMiddleware = (err, req, res, next) => {
-    if(err.statusCode !== undefined){
+    if (err.statusCode !== undefined) {
         res.status(err.statusCode)
         res.json(err.message);
-    } else{
-        res.status(500);
-        res.json(err.message);
+    } else {
+        res.status(500).json({ erro: err.message });
     }
 };
 
@@ -31,8 +47,7 @@ const produtos = [
 
 // Rota principal da API.
 app.get("/", (req, res) => {
-    res.status(200);
-    res.send("Aprendendo Node.js com Express");
+    res.status(200).send("Aprendendo Node.js com Express");
 });
 
 // Lista todos os produtos.
@@ -58,17 +73,13 @@ app.get("/produtos", (req, res) => {
 });
 
 // Retorna um produto específico pelo ID informado na rota.
-app.get("/produtos/:id", (req, res, next) => {
+app.get("/produtos/:id", async (req, res, next) => {
     const id = Number(req.params.id);
-    const i = produtos.findIndex(p => p.id === id);
-
-    if (i === -1) {
-        const erro = new Error("Produto não encontrado");
-        erro.statusCode = 404;
-        return next(erro);
-    } else {
-        res.status(200);
-        res.json(produtos[i]);
+    try {
+        const produto = await buscarProdutoId(id);
+        res.status(200).json(produto);
+    } catch (e) {
+        next(e);
     }
 });
 
@@ -131,8 +142,7 @@ app.patch("/produtos/:id", (req, res, next) => {
 
         produtos.splice(i, 1, produtoAlterado);
 
-        res.status(200);
-        res.json(produtoAlterado);
+        res.status(200).json(produtoAlterado);
     }
 });
 
@@ -153,8 +163,7 @@ app.delete("/produtos/:id", (req, res, next) => {
 
         produtos.splice(i, 1);
 
-        res.status(200);
-        res.json(produtoDeleted);
+        res.status(200).json(produtoDeleted);
     }
 });
 

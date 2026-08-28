@@ -3,6 +3,9 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
+const produtosRouter = require("./routes/produtos.route")
+const produtos = require("./data/products");
+
 
 function buscarProdutoId(id) {
     const promessa = new Promise((resolve, reject) => {
@@ -38,12 +41,6 @@ const errorMiddleware = (err, req, res, next) => {
 
 app.use(showMethodAndUrl);
 
-// PRODUCTS
-const produtos = [
-    { id: 1, nome: "Hospedagem Minecraft", preco: 29.90 },
-    { id: 2, nome: "VPS 4GB", preco: 59.90 }
-];
-
 // ROTAS GET
 
 // Rota principal da API.
@@ -54,24 +51,7 @@ app.get("/", (req, res) => {
 // Lista todos os produtos.
 // Também permite aplicar filtros opcionais pela query string.
 // Se um filtro não for informado, ele não interfere no resultado.
-app.get("/produtos", (req, res) => {
-    const { nome, precoMax } = req.query;
-
-    if (nome || precoMax) {
-        const produtosProcurados = produtos.filter(p => {
-            const passouNome = nome ? p.nome === nome : true;
-            const passouPreco = precoMax
-                ? p.preco <= Number(precoMax)
-                : true;
-
-            return passouNome && passouPreco;
-        });
-
-        return res.status(200).json(produtosProcurados);
-    }
-
-    return res.status(200).json(produtos);
-});
+app.use("/produtos", produtosRouter);
 
 // Retorna um produto específico pelo ID informado na rota.
 app.get("/produtos/:id", async (req, res) => {

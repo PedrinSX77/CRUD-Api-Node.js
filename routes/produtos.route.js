@@ -1,24 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const produtos = require("../data/products");
+const { listarProdutos, buscaProduto, criarProduto, deletarProduto, atualizarProduto } = require("../controllers/produtos.controller")
 
-router.get("/", (req, res) => {
-    const { nome, precoMax } = req.query;
+router.get("/", listarProdutos);
+router.get("/:id", buscaProduto);
+router.post("/", criarProduto);
+router.patch("/:id", atualizarProduto)
+router.delete("/:id", deletarProduto)
 
-    if (nome || precoMax) {
-        const produtosProcurados = produtos.filter(p => {
-            const passouNome = nome ? p.nome === nome : true;
-            const passouPreco = precoMax
-                ? p.preco <= Number(precoMax)
-                : true;
-
-            return passouNome && passouPreco;
-        });
-
-        return res.status(200).json(produtosProcurados);
-    }
-
-    return res.status(200).json(produtos);
-})
 
 module.exports = router;

@@ -23,8 +23,6 @@ const errorMiddleware = (err, req, res, next) => {
 app.use(showMethodAndUrl);
 
 // ROTAS GET
-
-// Rota principal da API.
 app.get("/", (req, res) => {
     res.status(200).send("Aprendendo Node.js com Express");
 });
@@ -44,9 +42,6 @@ app.get("/headers", (req, res) => {
 
 app.use(errorMiddleware)
 
-
-// SERVER
-// Inicia a API na porta configurada.
 app.listen(port, () => {
     console.log(`Rodando API em: http://localhost:${port}`);
 });

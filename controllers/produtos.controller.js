@@ -3,9 +3,9 @@ import { searchProductId, listProducts, createProduct, deleteProduct, updateProd
 
 // Funções Controllers
 
-function listarProdutos(req, res) {
+async function listarProdutos(req, res) {
     const { nome, precoMax } = req.query;
-    const produtosListados = listProducts(nome, precoMax);
+    const produtosListados = await listProducts(nome, precoMax);
     return res.status(200).json(produtosListados);
 }
 
@@ -15,22 +15,22 @@ async function buscaProduto(req, res) {
     res.status(200).json(produto);
 }
 
-function criarProduto(req, res) {
+async function criarProduto(req, res) {
     console.log(req.body);
     const { nome, preco } = req.body
-    const produtoNovo = createProduct(nome, preco);
+    const produtoNovo = await createProduct(nome, preco);
     return res.status(201).json(produtoNovo);
 }
 
-function deletarProduto(req, res) {
+async function deletarProduto(req, res) {
     const id = Number(req.params.id);
-    const produtoDeletado = deleteProduct(id);
+    const produtoDeletado = await deleteProduct(id);
     res.status(200).json(produtoDeletado);
 }
 
-function atualizarProduto(req, res) {
+async function atualizarProduto(req, res) {
     const id = Number(req.params.id);
-    const produtoAlterado = updateProduct(id, req.body);
+    const produtoAlterado = await updateProduct(id, req.body);
     res.status(200).json(produtoAlterado);
 }
 

@@ -1,92 +1,93 @@
-// Importação da lista de Produtos
-import produtos from "../data/products.js";
+// Importação do ORM
+import prisma from "../libs/prisma.js";
 
 // Funções de Processamento
-function listProducts(nome, precoMax) {
-    if (nome || precoMax) {
-        const produtosProcurados = produtos.filter(p => {
-            const passouNome = nome ? p.nome === nome : true;
-            const passouPreco = precoMax
-                ? p.preco <= Number(precoMax)
-                : true;
+async function listProducts(nome, precoMax) {
+    const filtros = {};
+    if (nome) filtros.nome = nome;
+    if (precoMax) filtros.preco = { lte: Number(precoMax) };
 
-            return passouNome && passouPreco;
-        });
-        return (produtosProcurados);
-    }
-
-    return produtos;
-}
-
-function searchProductId(id) {
-    const promessa = new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const produto = produtos.find(p => p.id === id);
-            if (produto === undefined) {
-                const erro = new Error("Produto não encontrado");
-                erro.statusCode = 404;
-                return reject(erro);
-            } else {
-                resolve(produto);
-            }
-        }, 500);
-    })
-
-    return promessa;
+    const produtosProcurados = await prisma.product.findMany({
+        where: filtros
+    });
+    return produtosProcurados;
 };
 
-function createProduct(nome, preco) {
+async function searchProductId(id) {
+    const produto = await prisma.product.findUnique({
+        where: { id }
+    });
+    if (produto === null) {
+        const erro = new Error("404: Produto não encontrado")
+        erro.statusCode = 404;
+        throw erro;
+    }
+
+    return produto;
+}
+
+async function createProduct(nome, preco) {
+    const data = {};
     if (!nome || preco === undefined) {
         const erro = new Error("Os campos 'nome' e 'preco' são obrigatórios.")
         erro.statusCode = 400;
         throw erro;
-    }
-
-    const proximoId = produtos.length > 0 ? produtos[produtos.length - 1].id + 1 : 1;
-    const produtoNovo = {
-        id: proximoId,
-        nome: nome,
-        preco: preco
-    }
-    produtos.push(produtoNovo);
-    return produtoNovo;
-}
-
-function deleteProduct(id) {
-    const i = produtos.findIndex(p => p.id === id);
-
-    if (i === -1) {
-        const erro = new Error("Erro: Produto não encontrado, id inválido")
-        erro.statusCode = 404;
+    } else if (Number(preco) < 0) {
+        const erro = new Error("O Campo preco deve ser maior ou igual a 0")
+        erro.statusCode = 400;
         throw erro;
-    } else {
-        const produtoDeleted = produtos[i];
-
-        produtos.splice(i, 1);
-
-        return produtoDeleted;
     }
+    if (nome) data.nome = nome;
+    if (preco !== undefined) data.preco = preco;
+
+    const produto = await prisma.product.create({
+        data: data
+    });
+    return produto;
 }
 
-function updateProduct(id, novosDados) {
-    const i = produtos.findIndex(p => p.id === id);
+async function deleteProduct(id) {
+    try {
+        const produto = await prisma.product.delete({
+            where: { id }
+        })
+        return produto;
+    } catch (e) {
+        if (e.code === "P2025") {
+            const erro = new Error("Produto não encontrado")
+            erro.statusCode = 404;
+            throw erro;
+        }
+        throw e;
+    }
 
-    if (i === -1) {
-        const erro = new Error("Erro: Produto não encontrado, id inválido")
-        erro.statusCode = 404;
-        throw erro;
-    } else {
-        const alteracao = novosDados;
+};
 
-        const produtoAlterado = {
-            ...produtos[i],
-            ...alteracao
-        };
+async function updateProduct(id, novosDados) {
+    try {
+        const data = {};
+        if (novosDados.nome) data.nome = novosDados.nome;
+        if (novosDados.preco !== undefined) {
+            if (Number(novosDados.preco) < 0) {
+                const erro = new Error("O campo preco deve ser maior ou igual a 0");
+                erro.statusCode = 400;
+                throw erro;
+            }
 
-        produtos.splice(i, 1, produtoAlterado);
-
-        return produtoAlterado;
+            data.preco = Number(novosDados.preco);
+        }
+        const produto = await prisma.product.update({
+            where: { id },
+            data
+        });
+        return produto;
+    } catch (e) {
+        if (e.code === "P2025") {
+            const erro = new Error("Produto não encontrado")
+            erro.statusCode = 404;
+            throw erro;
+        }
+        throw e;
     }
 }
-
 export { searchProductId, listProducts, createProduct, deleteProduct, updateProduct };

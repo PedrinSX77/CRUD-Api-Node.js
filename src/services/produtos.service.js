@@ -8,7 +8,10 @@ async function listProducts(nome, precoMax) {
     if (precoMax) filtros.preco = { lte: Number(precoMax) };
 
     const produtosProcurados = await prisma.product.findMany({
-        where: filtros
+        where: filtros,
+        include: {
+            category: true
+        }
     });
     return produtosProcurados;
 };
@@ -26,10 +29,10 @@ async function searchProductId(id) {
     return produto;
 }
 
-async function createProduct(nome, preco) {
+async function createProduct(nome, preco, categoryId) {
     const data = {};
-    if (!nome || preco === undefined) {
-        const erro = new Error("Os campos 'nome' e 'preco' são obrigatórios.")
+    if (!nome || categoryId === undefined || preco === undefined) {
+        const erro = new Error("Os campos 'nome', 'categoryId' e 'preco' são obrigatórios.")
         erro.statusCode = 400;
         throw erro;
     } else if (Number(preco) < 0) {
@@ -39,6 +42,19 @@ async function createProduct(nome, preco) {
     }
     if (nome) data.nome = nome;
     if (preco !== undefined) data.preco = preco;
+    const categoriaNumber = Number(categoryId)
+    const categoriaExiste = await prisma.category.findUnique({
+        where: {
+            id: categoriaNumber
+        }
+    })
+    if (categoriaExiste !== null) {
+        data.categoryId = categoriaNumber
+    } else {
+        const erro = new Error("Categoria não encontrada")
+        erro.statusCode = 404;
+        throw erro;
+    }
 
     const produto = await prisma.product.create({
         data: data

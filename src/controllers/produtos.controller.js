@@ -17,8 +17,8 @@ async function buscaProduto(req, res) {
 
 async function criarProduto(req, res) {
     console.log(req.body);
-    const { nome, preco } = req.body
-    const produtoNovo = await createProduct(nome, preco);
+    const { nome, preco, categoryId } = req.body
+    const produtoNovo = await createProduct(nome, preco, categoryId);
     return res.status(201).json(produtoNovo);
 }
 

@@ -11,8 +11,16 @@ datasource db {
   provider = "postgresql"
 }
 
+model Category{
+  id Int @id @default(autoincrement())
+  nome String
+  products Product[]
+}
+
 model Product {
   id    Int     @id @default(autoincrement())
   nome  String
   preco Decimal
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
 }

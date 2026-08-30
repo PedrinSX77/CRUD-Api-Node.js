@@ -1,10 +1,10 @@
-# CRUD API com Node.js, Express, Prisma e PostgreSQL
+# CRUD API — Node.js, Express, Prisma e PostgreSQL
 
 API REST desenvolvida como projeto de estudo de backend com Node.js.
 
-O projeto começou como um CRUD simples em memória e evoluiu para uma aplicação com arquitetura em camadas, persistência em PostgreSQL, Prisma ORM, tratamento centralizado de erros e operações assíncronas.
+O projeto começou como um CRUD simples em memória e evoluiu para uma aplicação com arquitetura em camadas, persistência em PostgreSQL, relacionamentos entre entidades, Prisma ORM, migrations e tratamento centralizado de erros.
 
-## Tecnologias
+## 🛠️ Tecnologias
 
 - Node.js
 - Express 5
@@ -14,11 +14,12 @@ O projeto começou como um CRUD simples em memória e evoluiu para uma aplicaç�
 - Prisma ORM
 - Prisma PostgreSQL Adapter
 - dotenv
+- Nodemon
 - Git
 
-## Arquitetura
+---
 
-O projeto utiliza separação de responsabilidades em camadas:
+## 🏗️ Arquitetura
 
 ```text
 Request HTTP
@@ -34,138 +35,159 @@ Prisma
 PostgreSQL
 ```
 
-### Routes
+O projeto separa responsabilidades entre:
 
-Responsáveis por identificar o método HTTP e o endpoint solicitado e encaminhar a requisição para o controller correspondente.
-
-### Controllers
-
-Responsáveis pela camada HTTP da aplicação.
-
-Recebem dados através de:
-
-- `req.params`
-- `req.query`
-- `req.body`
-
-Chamam os services e retornam a resposta HTTP ao cliente.
-
-### Services
-
-Responsáveis pelas regras de negócio e operações relacionadas aos produtos.
-
-É nesta camada que ficam:
-
-- validações;
-- consultas;
-- criação;
-- atualização;
-- remoção;
-- tratamento de registros inexistentes.
-
-### Prisma
-
-O Prisma faz a comunicação entre a aplicação Node.js e o PostgreSQL.
-
-O model atual é:
-
-```prisma
-model Product {
-  id    Int     @id @default(autoincrement())
-  nome  String
-  preco Decimal
-}
-```
-
-O `id` é gerado automaticamente pelo banco.
+- **Routes** → definem endpoints e métodos HTTP;
+- **Controllers** → lidam com `req` e `res`;
+- **Services** → concentram regras, validações e acesso aos dados;
+- **Middlewares** → tratam comportamentos compartilhados;
+- **Prisma** → realiza a comunicação com o PostgreSQL.
 
 ---
 
-## Estrutura do projeto
+## 📁 Estrutura
 
 ```text
 .
-├── controllers/
-│   └── produtos.controller.js
-│
-├── libs/
-│   └── prisma.js
-│
 ├── prisma/
 │   ├── migrations/
 │   └── schema.prisma
 │
-├── routes/
-│   └── produtos.route.js
-│
-├── services/
-│   └── produtos.service.js
+├── src/
+│   ├── controllers/
+│   │   ├── categoria.controller.js
+│   │   └── produtos.controller.js
+│   │
+│   ├── libs/
+│   │   └── prisma.js
+│   │
+│   ├── middlewares/
+│   │   ├── errorHandler.middleware.js
+│   │   └── routesLogs.middleware.js
+│   │
+│   ├── routes/
+│   │   ├── categoria.route.js
+│   │   └── produtos.route.js
+│   │
+│   ├── services/
+│   │   ├── categoria.service.js
+│   │   └── produtos.service.js
+│   │
+│   └── server.js
 │
 ├── .env.example
 ├── .gitignore
 ├── package.json
-├── prisma7.config.ts
-└── server.js
+├── package-lock.json
+└── prisma7.config.js
 ```
 
 ---
 
-# Funcionalidades
+## 🗄️ Banco de dados
 
-A API atualmente possui CRUD completo de produtos com persistência em PostgreSQL.
-
-- Listar produtos
-- Buscar produto por ID
-- Criar produto
-- Atualizar produto
-- Excluir produto
-- Filtrar produtos por nome
-- Filtrar produtos por preço máximo
-- Validação de campos obrigatórios
-- Validação de preço
-- Tratamento de produto inexistente
-- Tratamento centralizado de erros
-- Persistência de dados com PostgreSQL
-
----
-
-# Endpoints
-
-Base:
+Atualmente existem duas entidades relacionadas:
 
 ```text
-/produtos
+Category 1 ───────── N Product
 ```
 
-## Listar produtos
+Cada categoria pode possuir vários produtos e cada produto pertence obrigatoriamente a uma categoria.
+
+```prisma
+model Category {
+  id       Int       @id @default(autoincrement())
+  nome     String
+  products Product[]
+}
+
+model Product {
+  id         Int      @id @default(autoincrement())
+  nome       String
+  preco      Decimal
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+}
+```
+
+A Foreign Key:
+
+```text
+Product.categoryId
+        ↓
+Category.id
+```
+
+é controlada pelo PostgreSQL e representada no Prisma através do relation field `category`.
+
+---
+
+## ✨ Funcionalidades
+
+### Produtos
+
+- Criar produto
+- Listar produtos
+- Buscar produto por ID
+- Atualizar produto
+- Excluir produto
+- Filtrar por nome
+- Filtrar por preço máximo
+- Associar produto a uma categoria
+- Validar existência da categoria
+- Retornar categoria relacionada na listagem
+- Validar campos obrigatórios e preço
+- Tratar produtos inexistentes
+
+### Categorias
+
+- Criar categoria
+- Listar categorias
+- Consultar categorias com seus produtos relacionados
+
+### Aplicação
+
+- Arquitetura Route → Controller → Service
+- Middlewares separados
+- Tratamento centralizado de erros
+- Logger de requisições
+- Async / Await
+- ES Modules
+- Variáveis de ambiente
+- Persistência com PostgreSQL
+- Migrations com Prisma
+
+---
+
+# 🔗 Endpoints
+
+## Produtos
+
+### Listar
 
 ```http
 GET /produtos
 ```
 
-Retorna todos os produtos cadastrados.
-
-### Filtro por nome
+Filtros opcionais:
 
 ```http
 GET /produtos?nome=VPS
 ```
 
-### Filtro por preço máximo
-
 ```http
-GET /produtos?precoMax=50
+GET /produtos?precoMax=100
 ```
 
-### Combinando filtros
-
 ```http
-GET /produtos?nome=VPS&precoMax=50
+GET /produtos?nome=VPS&precoMax=100
 ```
+
+A listagem inclui a categoria relacionada ao produto.
 
 ---
 
-## Buscar produto por ID
+### Buscar por ID
 
 ```http
 GET /produtos/:id
@@ -177,15 +199,9 @@ Exemplo:
 GET /produtos/1
 ```
 
-Caso o produto não exista, a API retorna:
-
-```text
-404 Not Found
-```
-
 ---
 
-## Criar produto
+### Criar
 
 ```http
 POST /produtos
@@ -196,28 +212,21 @@ Body:
 ```json
 {
   "nome": "VPS 4GB",
-  "preco": 49.90
+  "preco": 49.90,
+  "categoryId": 1
 }
 ```
 
-Os campos `nome` e `preco` são obrigatórios.
+`nome`, `preco` e `categoryId` são obrigatórios.
 
-O preço deve ser maior ou igual a zero.
-
-O ID não precisa ser enviado, pois é gerado automaticamente pelo PostgreSQL.
+A API verifica se a categoria informada existe antes de criar o produto.
 
 ---
 
-## Atualizar produto
+### Atualizar
 
 ```http
 PATCH /produtos/:id
-```
-
-Exemplo:
-
-```http
-PATCH /produtos/1
 ```
 
 Body:
@@ -229,69 +238,49 @@ Body:
 }
 ```
 
-É possível enviar somente os campos que devem ser alterados.
-
-Exemplo:
-
-```json
-{
-  "preco": 59.90
-}
-```
+A atualização é parcial, portanto não é necessário enviar todos os campos.
 
 ---
 
-## Excluir produto
+### Excluir
 
 ```http
 DELETE /produtos/:id
 ```
 
-Exemplo:
+---
+
+## Categorias
+
+### Listar
 
 ```http
-DELETE /produtos/1
+GET /categoria
 ```
 
-Caso o produto não exista, a API retorna `404`.
+A listagem pode retornar os produtos relacionados através da relação definida no Prisma.
 
 ---
 
-# Banco de dados
+### Criar
 
-O projeto utiliza PostgreSQL.
-
-O Prisma é utilizado como ORM para realizar as operações no banco.
-
-Exemplos de métodos utilizados:
-
-```js
-prisma.product.findMany()
-prisma.product.findUnique()
-prisma.product.create()
-prisma.product.update()
-prisma.product.delete()
+```http
+POST /categoria
 ```
 
-As alterações na estrutura do banco são controladas através de migrations.
+Body:
 
-Fluxo:
-
-```text
-schema.prisma
-    ↓
-Prisma Migrate
-    ↓
-migration.sql
-    ↓
-PostgreSQL
+```json
+{
+  "nome": "VPS"
+}
 ```
 
 ---
 
-# Configuração
+# ⚙️ Configuração
 
-Clone o repositório:
+Clone o projeto:
 
 ```bash
 git clone https://github.com/PedrinSX77/CRUD-Api-Node.js.git
@@ -309,20 +298,26 @@ Instale as dependências:
 npm install
 ```
 
-Crie um arquivo `.env` utilizando `.env.example` como referência:
+Crie seu `.env` utilizando `.env.example` como referência:
 
 ```env
 PORT=8080
 DATABASE_URL="postgresql://usuario:senha@localhost:5432/nome_do_banco"
 ```
 
-> Nunca envie o arquivo `.env` com credenciais reais para o GitHub.
+> O `.env` com credenciais reais não deve ser enviado ao GitHub.
 
 ---
 
-# Prisma
+## Prisma
 
-Após configurar o PostgreSQL, execute as migrations:
+Valide o schema:
+
+```bash
+npx prisma validate
+```
+
+Execute as migrations:
 
 ```bash
 npx prisma migrate dev
@@ -336,29 +331,37 @@ npx prisma generate
 
 ---
 
-# Executando a API
+# ▶️ Executando
+
+### Desenvolvimento
+
+Executa com Nodemon:
+
+```bash
+npm run dev
+```
+
+### Execução normal
 
 ```bash
 npm start
 ```
 
-Por padrão, a aplicação utiliza a porta definida em:
-
-```env
-PORT=8080
-```
-
-Caso `PORT` não esteja definida, o servidor utiliza a porta `3000`.
-
-Exemplo:
+A aplicação utiliza:
 
 ```text
-http://localhost:8080
+PORT definida no .env
+```
+
+ou, caso ela não exista:
+
+```text
+3000
 ```
 
 ---
 
-# Tratamento de erros
+## ⚠️ Tratamento de erros
 
 A aplicação possui middleware centralizado para tratamento de erros.
 
@@ -369,43 +372,64 @@ Exemplos:
 → dados inválidos
 
 404 Not Found
-→ produto não encontrado
+→ produto ou categoria não encontrado
 
 500 Internal Server Error
 → erro interno inesperado
 ```
 
-Erros do Prisma relacionados a registros inexistentes também são tratados pela camada de service.
+Erros específicos do Prisma também são tratados na camada de Service quando necessário.
 
 ---
 
-# Objetivo do projeto
+## 📈 Evolução do projeto
 
-Este projeto foi criado com finalidade de estudo e prática de desenvolvimento backend.
-
-Durante seu desenvolvimento foram aplicados conceitos como:
-
-- Node.js puro e fluxo HTTP;
-- Express;
-- APIs REST;
-- middlewares;
-- CRUD;
-- async/await;
-- tratamento de erros;
-- ES Modules;
-- arquitetura Route / Controller / Service;
-- PostgreSQL;
-- Prisma ORM;
-- migrations;
-- persistência de dados;
-- Git e versionamento.
-
-O projeto continuará evoluindo conforme novos conceitos de backend forem estudados.
+```text
+Node.js puro
+      ↓
+Express
+      ↓
+CRUD em memória
+      ↓
+Middlewares
+      ↓
+Async / Await
+      ↓
+Tratamento de erros
+      ↓
+Express Router
+      ↓
+Controllers
+      ↓
+Services
+      ↓
+ES Modules
+      ↓
+Prisma ORM
+      ↓
+PostgreSQL
+      ↓
+Migrations
+      ↓
+CRUD persistente
+      ↓
+Relacionamentos 1:N
+      ↓
+Category + Product
+```
 
 ---
 
-## Autor
+## 🎯 Objetivo
 
-Desenvolvido por **Pedro Henrique**.
+Este projeto acompanha minha evolução prática em desenvolvimento backend.
 
-GitHub: [@PedrinSX77](https://github.com/PedrinSX77)
+Além de implementar funcionalidades, o objetivo é estudar e aplicar gradualmente conceitos como arquitetura, banco de dados relacional, validação, autenticação, testes, segurança e deploy.
+
+---
+
+## 👨‍💻 Autor
+
+Desenvolvido por **Pedro Henrique** com muito ☕.
+
+[GitHub — @PedrinSX77](https://github.com/PedrinSX77)
